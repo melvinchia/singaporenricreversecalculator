@@ -1,1 +1,152 @@
-hello world
+<div class="row">
+	<div class="col">
+		Last 4 characters of Singapore NRIC
+		<input type="text" id="suffix" maxlength=4></input><br><br>
+		Date of Birth
+		<select id="mob">
+			<option value="1">Jan</option>
+			<option value="2">Feb</option>
+			<option value="3">Mar</option>
+			<option value="4">Apr</option>
+			<option value="5">May</option>
+			<option value="6">Jun</option>
+			<option value="7">Jul</option>
+			<option value="8">Aug</option>
+			<option value="9">Sep</option>
+			<option value="10">Oct</option>
+			<option value="11">Nov</option>
+			<option value="12">Dec</option>
+		</select>
+		<select id="yob">
+		</select>
+		<input type="button" id="check" value="Check">
+	</div>
+	<div class="col">
+		Possible NRIC Numbers:<br>
+		<textarea rows="15" cols="70" id="result"></textarea><br>
+		* Indicates higher probability
+	</div>
+</div>
+
+<style>
+.row {
+	clear: both;
+}
+.col {
+	float: left;
+	width: 50%;
+}
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+function populateYob() {
+	var d = new Date();
+	var i;
+	for (i = d.getFullYear(); i > 1967; i--) {
+		$("#yob").append($("<option>", { value: i, text: i }));
+	}
+	$("#yob").append($("<option>", { value: 1967, text: "1967 and earlier" }));
+}
+populateYob();
+
+function getCheckDigit(nric, nric0) {
+	var checkDigit;
+	var nricArr = nric.split("");
+	var total =
+		2 * nricArr[0] +
+		7 * nricArr[1] +
+		6 * nricArr[2] +
+		5 * nricArr[3] +
+		4 * nricArr[4] +
+		3 * nricArr[5] +
+		2 * nricArr[6];
+	if (nric0 == "T" || nric0 == "G") {
+		// added +4 for NRIC starting with T or G
+		total = total + 4;
+	}
+	var checkDigit = 11 - (total % 11);
+	if (checkDigit == 1) {
+		return "A";
+	} else if (checkDigit == 2) {
+		return "B";
+	} else if (checkDigit == 3) {
+		return "C";
+	} else if (checkDigit == 4) {
+		return "D";
+	} else if (checkDigit == 5) {
+		return "E";
+	} else if (checkDigit == 6) {
+		return "F";
+	} else if (checkDigit == 7) {
+		return "G";
+	} else if (checkDigit == 8) {
+		return "H";
+	} else if (checkDigit == 9) {
+		return "I";
+	} else if (checkDigit == 10) {
+		return "Z";
+	} else if (checkDigit == 11) {
+		return "J";
+	} else {
+		return "X";
+	} // invalid
+}
+
+$("#check").click(function () {
+	$("#result").empty();
+	var suffix = $("#suffix").val();
+	var yob = $("#yob").val();
+	var mob = $("#mob").val();
+
+	// validation
+	patt = /^\d\d\d[ABCDEFGHIJZ]$/;
+	if (!patt.test(suffix)) {
+		alert(
+			"Last 4 characters of Pink NRIC should be 3 Digits and 1 Uppercase Letter (ABCDEFGHIJZ)"
+		);
+	}
+
+	var yobArr = [yob.substr(0, 2), yob.substr(-2)];
+	var nric0 = String.fromCharCode(64 + parseInt(yobArr[0]));
+	var nric567 = suffix.substr(0, 3);
+	var nric8 = suffix.substr(-1);
+	var nric12;
+	if (yob > 1967) {
+		nric12 = yobArr[1];
+		for (i = 0; i < 99; i++) {
+			nricTest = nric12 + i.toString().padStart(2, "0") + nric567;
+			var checkDigit = getCheckDigit(nricTest, nric0);
+			if (checkDigit == nric8) {
+				$("#result").append(nric0).append(nricTest).append(nric8);
+
+				var mobTest = (i / 10) * 3;
+				if (
+					// added -1 and +1 to widen the birthday month guess
+					Math.ceil(mobTest) == mob ||
+					Math.floor(mobTest) == mob ||
+					Math.ceil(mobTest) - 1 == mob ||
+					Math.floor(mobTest) - 1 == mob ||
+					Math.ceil(mobTest) + 1 == mob ||
+					Math.floor(mobTest) + 1 == mob
+				) {
+					$("#result").append(" *\n");
+				} else $("#result").append("\n");
+			}
+		}
+	} else {
+		for (i = 0; i < 5999; i++) {
+			nricTest = i.toString().padStart(4, "0") + nric567;
+			var checkDigit = getCheckDigit(nricTest);
+			if (checkDigit == nric8) {
+				$("#result").append(nric0).append(nricTest).append(nric8);
+
+				var mobTest = (i / 10) * 3;
+				if (Math.ceil(mobTest) == mob || Math.floor(mobTest) == mob) {
+					$("#result").append(" *\n");
+				} else $("#result").append("\n");
+			}
+		}
+	}
+});
+</script>
