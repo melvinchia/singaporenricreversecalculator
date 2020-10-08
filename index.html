@@ -50,47 +50,29 @@ function populateYob() {
 }
 populateYob();
 
-function getCheckDigit(nric, nric0) {
-	var checkDigit;
-	var nricArr = nric.split("");
-	var total =
-		2 * nricArr[0] +
-		7 * nricArr[1] +
-		6 * nricArr[2] +
-		5 * nricArr[3] +
-		4 * nricArr[4] +
-		3 * nricArr[5] +
-		2 * nricArr[6];
-	if (nric0 == "T" || nric0 == "G") {
-		// added +4 for NRIC starting with T or G
-		total = total + 4;
+function getCheckDigit(id) {
+	var multiples = [2, 7, 6, 5, 4, 3, 2], total = 0, count = 0, outputs;
+	var numericId, first = id[0], last = id[id.length - 1];
+	numericId = id.substr(1, 7);
+	if (isNaN(numericId)) return false;
+
+	while (numericId !== 0) {
+		total += (numericId % 10) * multiples[multiples.length - (1 + count++)];
+		numericId /= 10;
+		numericId = Math.floor(numericId);
 	}
-	var checkDigit = 11 - (total % 11);
-	if (checkDigit == 1) {
-		return "A";
-	} else if (checkDigit == 2) {
-		return "B";
-	} else if (checkDigit == 3) {
-		return "C";
-	} else if (checkDigit == 4) {
-		return "D";
-	} else if (checkDigit == 5) {
-		return "E";
-	} else if (checkDigit == 6) {
-		return "F";
-	} else if (checkDigit == 7) {
-		return "G";
-	} else if (checkDigit == 8) {
-		return "H";
-	} else if (checkDigit == 9) {
-		return "I";
-	} else if (checkDigit == 10) {
-		return "Z";
-	} else if (checkDigit == 11) {
-		return "J";
-	} else {
-		return "X";
-	} // invalid
+	if (first == "S") {
+		outputs = ["J", "Z", "I", "H", "G", "F", "E", "D", "C", "B", "A"];
+	} else if (first == "T") {
+		outputs = ["G", "F", "E", "D", "C", "B", "A", "J", "Z", "I", "H"];
+	} else if (first == "F") {
+		outputs = ["X", "W", "U", "T", "R", "Q", "P", "N", "M", "L", "K"];
+	} else if (first == "G") {
+		outputs = ["R", "Q", "P", "N", "M", "L", "K", "X", "W", "U", "T"];
+	} else { // invalid first letter
+		outputs = ["#", "#", "#", "#", "#", "#", "#", "#", "#", "#", "#"];
+	}
+	return outputs[total % 11];
 }
 
 $("#check").click(function () {
@@ -101,11 +83,7 @@ $("#check").click(function () {
 
 	// validation
 	patt = /^\d\d\d[ABCDEFGHIJZ]$/;
-	if (!patt.test(suffix)) {
-		alert(
-			"Last 4 characters of Pink NRIC should be 3 Digits and 1 Uppercase Letter (ABCDEFGHIJZ)"
-		);
-	}
+	if (!patt.test(suffix)) { alert("Last 4 characters of NRIC/FIN should be 3 Digits and 1 Uppercase Letter (ABCDEFGHIJZ)"); }
 
 	var yobArr = [yob.substr(0, 2), yob.substr(-2)];
 	var nric0 = String.fromCharCode(64 + parseInt(yobArr[0]));
@@ -116,7 +94,7 @@ $("#check").click(function () {
 		nric12 = yobArr[1];
 		for (i = 0; i < 99; i++) {
 			nricTest = nric12 + i.toString().padStart(2, "0") + nric567;
-			var checkDigit = getCheckDigit(nricTest, nric0);
+			var checkDigit = getCheckDigit(nric0 + nricTest);
 			if (checkDigit == nric8) {
 				$("#result").append(nric0).append(nricTest).append(nric8);
 
@@ -137,7 +115,7 @@ $("#check").click(function () {
 	} else {
 		for (i = 0; i < 5999; i++) {
 			nricTest = i.toString().padStart(4, "0") + nric567;
-			var checkDigit = getCheckDigit(nricTest);
+			var checkDigit = getCheckDigit(nric0 + nricTest);
 			if (checkDigit == nric8) {
 				$("#result").append(nric0).append(nricTest).append(nric8);
 
